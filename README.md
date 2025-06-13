@@ -15,8 +15,8 @@ $logger->pushHandler(new KafkaHandler($producer, 'test'));
 ```
 
 Works with:
-- PHP 7.4+ with PECL rdkafka 4.x/5.x
-- PHP 8+ with PECL rdkafka 5.x
+- PHP 8.1+ with PECL rdkafka 4.x/5.x
+- Monolog 3.x
 
 Manually tested with Apache Kafka 2.8.0.
 

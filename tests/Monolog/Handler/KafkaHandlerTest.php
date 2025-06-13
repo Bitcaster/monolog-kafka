@@ -3,7 +3,9 @@
 namespace Monolog\Handler;
 
 use Kozlice\Monolog\Handler\KafkaHandler;
+use Monolog\Level;
 use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 use RdKafka\Conf;
 use RdKafka\Producer;
@@ -64,12 +66,11 @@ class KafkaHandlerTest extends TestCase
     public function testShouldLogMessage()
     {
         $record = $this->getRecord();
-        $expectedMessage = sprintf("[%s] test.WARNING: test [] []", $record['datetime']);
-
+        
         $topic = $this->createMock(ProducerTopic::class);
         $topic->expects($this->once())
             ->method('produce')
-            ->with(RD_KAFKA_PARTITION_UA, 0, $expectedMessage);
+            ->with(RD_KAFKA_PARTITION_UA, 0, $this->stringContains('test.WARNING: test [] []'));
 
         $producer = $this->createMock(Producer::class);
         $producer->expects($this->once())
@@ -159,18 +160,17 @@ class KafkaHandlerTest extends TestCase
     }
 
     /**
-     * @return array Record
+     * @return LogRecord Record
      */
-    protected function getRecord($level = Logger::WARNING, $message = 'test', $context = [])
+    protected function getRecord($level = Level::Warning, $message = 'test', $context = [])
     {
-        return [
-            'message' => $message,
-            'context' => $context,
-            'level' => $level,
-            'level_name' => Logger::getLevelName($level),
-            'channel' => 'test',
-            'datetime' => microtime(true),
-            'extra' => [],
-        ];
+        return new LogRecord(
+            datetime: new \DateTimeImmutable(),
+            channel: 'test',
+            level: $level,
+            message: $message,
+            context: $context,
+            extra: []
+        );
     }
 }
