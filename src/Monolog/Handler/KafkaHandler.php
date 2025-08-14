@@ -6,7 +6,6 @@ use Monolog\Formatter\FormatterInterface;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
-use Monolog\Logger;
 use Monolog\LogRecord;
 use RdKafka\Producer;
 use RdKafka\ProducerTopic;
@@ -34,11 +33,11 @@ class KafkaHandler extends AbstractProcessingHandler
     private int $flushTimeout = 100;
 
     /**
-     * @param Producer   $producer    Kafka message producer instance
-     * @param string     $topicName   Kafka topic name (if it doesn't exist yet, will be created)
+     * @param Producer $producer Kafka message producer instance
+     * @param string $topicName Kafka topic name (if it doesn't exist yet, will be created)
      * @param ?TopicConf $topicConfig Kafka topic config (optional)
      * @param int|string|Level $level The minimum logging level at which this handler will be triggered
-     * @param bool       $bubble      Whether the messages that are handled can bubble up the stack or not
+     * @param bool $bubble Whether the messages that are handled can bubble up the stack or not
      */
     public function __construct(Producer $producer, $topicName, ?TopicConf $topicConfig = null, $level = Level::Debug, bool $bubble = true)
     {
@@ -71,8 +70,11 @@ class KafkaHandler extends AbstractProcessingHandler
      */
     protected function write(LogRecord $record): void
     {
-        $data = (string)$record->formatted;
+        $data = $record->formatted;
         $this->topic->produce(RD_KAFKA_PARTITION_UA, 0, $data);
+        while ($this->producer->getOutQLen() > 0) {
+            $this->producer->poll(1);
+        }
     }
 
     /**
