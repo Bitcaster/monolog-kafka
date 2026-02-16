@@ -56,9 +56,12 @@ class KafkaHandler extends AbstractProcessingHandler
 
     public function __destruct()
     {
-        // Starting from rdkafka 4.0, programs MUST call flush() before shutting down, otherwise
-        // some messages and callbacks may be lost.
-        $this->producer->flush($this->flushTimeout);
+        // Non-blocking: trigger pending callbacks but never block during shutdown.
+        // flush() ignores its timeout when the broker is unreachable (blocks on
+        // request.timeout.ms per message internally), and with 10+ Producer
+        // instances this causes 500s+ zombie workers. Losing buffered log
+        // messages on shutdown is acceptable; hanging FPM workers is not.
+        $this->producer->poll(0);
     }
 
     /**
