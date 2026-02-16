@@ -30,7 +30,7 @@ class KafkaHandler extends AbstractProcessingHandler
 {
     private ProducerTopic $topic;
     private Producer $producer;
-    private int $flushTimeout = 100;
+    private int $flushTimeout = 1000;
 
     /**
      * @param Producer $producer Kafka message producer instance
@@ -72,9 +72,7 @@ class KafkaHandler extends AbstractProcessingHandler
     {
         $data = $record->formatted;
         $this->topic->produce(RD_KAFKA_PARTITION_UA, 0, $data);
-        while ($this->producer->getOutQLen() > 0) {
-            $this->producer->poll(1);
-        }
+        $this->producer->poll(0);
     }
 
     /**
